@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+	<head>
+		<meta charset="UTF-8">
+		<title>股票預測系統</title>
+	</head>
+	<body>
+		<h2>📈 股票預測系統</h2>
+		<form method="POST">
+			<label>輸入股票代碼：</label>
+			<input type="text" name="symbol" required>
+
+			<br><br>
+			<label>📊 選擇顯示的技術指標：</label><br>
+			<input type="checkbox" name="indicators" value="RSI"> RSI<br>
+			<input type="checkbox" name="indicators" value="MACD"> MACD<br>
+			<input type="checkbox" name="indicators" value="Bollinger"> 布林通道<br>
+			<input type="checkbox" name="indicators" value="Fibonacci"> 費波那契0.618<br>
+			<input type="checkbox" name="indicators" value="OBV"> OBV<br>
+
+			<br>
+			<button type="submit">預測</button>
+		</form>
+
+		{% if result %}
+			<h3>📌 預測建議：</h3>
+			<p>{{ result }}</p>
+		{% endif %}
+
+		{% if chart %}
+			<h3>📈 技術指標圖：</h3>
+			<img src="data:image/png;base64,{{ chart }}">
+		{% endif %}
+
+		{% if backtest_chart %}
+			<h3>📉 策略回測圖：</h3>
+			<img src="data:image/png;base64,{{ backtest_chart }}">
+		{% endif %}
+
+	</body>
+</html>

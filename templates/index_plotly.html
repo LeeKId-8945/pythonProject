@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>股票技術指標圖</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h2>📈 股票技術指標分析</h2>
+  <form method="POST">
+    <label>輸入股票代碼：</label>
+    <input type="text" name="symbol" value="{{ symbol }}" required>
+    <button type="submit">查詢</button>
+  </form>
+
+  {% if result %}
+    <h3>📌 模型預測建議：{{ result }}</h3>
+  {% endif %}
+
+  {% if report_html %}
+  <h3>📊 模型效能報告：</h3>
+  {{ report_html | safe }}
+  {% endif %}
+  {% if model_reports %}
+  <h3>📊 三種模型比較：</h3>
+  {% for name, report in model_reports.items() %}
+    <h4>{{ name }}</h4>
+    {{ report | safe }}
+  {% endfor %}
+{% endif %}
+
+  <div>
+    <label>📊 顯示線條：</label><br>
+    <input type="checkbox" class="indicator-toggle" value="收盤價" checked> 收盤價
+    <input type="checkbox" class="indicator-toggle" value="上布林" checked> 上布林
+    <input type="checkbox" class="indicator-toggle" value="下布林" checked> 下布林
+    <input type="checkbox" class="indicator-toggle" value="費波那契" checked> 費波那契
+    <input type="checkbox" class="indicator-toggle" value="RSI" checked> RSI
+    <input type="checkbox" class="indicator-toggle" value="MACD" checked> MACD
+    <input type="checkbox" class="indicator-toggle" value="MACD_Signal" checked> MACD_Signal
+    <input type="checkbox" class="indicator-toggle" value="OBV" checked> OBV
+  </div>
+
+  <div id="chart" style="width:100%;height:1000px;"></div>
+
+  <script>
+    const data = JSON.parse(`{{ chart_data | tojson | safe }}`);
+    const dates = data.Date;
+    const traces = [];
+
+    function createTrace(name, y, color, xaxis, yaxis, dash = 'solid') {
+      return {
+        x: dates,
+        y: y,
+        name: name,
+        mode: 'lines',
+        line: { color: color, width: 2, dash: dash },
+        xaxis: xaxis,
+        yaxis: yaxis,
+        visible: true
+      };
+    }
+
+    traces.push(createTrace('收盤價', data.Close, 'black', 'x1', 'y1'));
+    traces.push(createTrace('上布林', data.Bollinger_Upper, 'blue', 'x1', 'y1', 'dot'));
+    traces.push(createTrace('下布林', data.Bollinger_Lower, 'blue', 'x1', 'y1', 'dot'));
+    traces.push(createTrace('費波那契', data.Fibonacci_0618, 'purple', 'x1', 'y1'));
+
+    traces.push(createTrace('RSI', data.RSI, 'orange', 'x2', 'y2'));
+    traces.push(createTrace('MACD', data.MACD, 'green', 'x2', 'y2'));
+    traces.push(createTrace('MACD_Signal', data.MACD_Signal, 'red', 'x2', 'y2', 'dash'));
+
+    traces.push(createTrace('OBV', data.OBV, 'brown', 'x3', 'y3'));
+
+    const layout = {
+      title: '📊 股票技術分析（三圖同步 + 線條控制）',
+      grid: { rows: 3, columns: 1, pattern: 'independent' },
+      height: 1000,
+      showlegend: true,
+      xaxis: { domain: [0, 1], anchor: 'y1', matches: 'x', title: '日期' },
+      yaxis: { domain: [0.66, 1.0], title: '價格' },
+      xaxis2: { domain: [0, 1], anchor: 'y2', matches: 'x' },
+      yaxis2: { domain: [0.33, 0.66], title: '技術指標' },
+      xaxis3: { domain: [0, 1], anchor: 'y3', matches: 'x' },
+      yaxis3: { domain: [0.0, 0.33], title: 'OBV' },
+      legend: { orientation: 'h', x: 0, y: -0.25 }
+    };
+
+    Plotly.newPlot('chart', traces, layout);
+
+    // 開關線條功能
+    document.querySelectorAll('.indicator-toggle').forEach((checkbox) => {
+      checkbox.addEventListener('change', () => {
+        const name = checkbox.value;
+        const visible = checkbox.checked ? true : 'legendonly';
+        for (let i = 0; i < traces.length; i++) {
+          if (traces[i].name === name) {
+            Plotly.restyle('chart', { visible: visible }, [i]);
+          }
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
